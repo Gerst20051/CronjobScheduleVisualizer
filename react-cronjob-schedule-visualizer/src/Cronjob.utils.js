@@ -45,3 +45,26 @@ export function buildCronjobSchedule(jobs, minutes) {
     return results;
   }, []).sort().map(job => job.split(' ').slice(1).join(' '));
 }
+
+function midnightForDate(date) {
+  const dateCopy = new Date(date.getTime());
+  dateCopy.setHours(0, 0, 0, 0);
+  return dateCopy;
+}
+
+function diffMinutes(date2, date1) {
+  const diff = (date2.getTime() - date1.getTime()) / 1000 / 60;
+  return Math.abs(Math.round(diff));
+}
+
+function minutesFromMidnight(date) {
+  const midnightDate = midnightForDate(date);
+  return diffMinutes(midnightDate, date);
+}
+
+export function buildCronjobBarChartData(jobs, minutes) {
+  return jobs.reduce((result, job) => {
+    result[job.cronjob] = job.minuteMatches(minutes).map(minutesFromMidnight);
+    return result;
+  }, {});
+}

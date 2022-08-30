@@ -6,7 +6,10 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 
+import Cronjob from './Cronjob.class';
+import { buildCronjobBarChartData, buildCronjobSchedule, getMinutesForYear, isSameDay } from './Cronjob.utils';
 import CronjobSchedule from './CronjobSchedule';
+import CronjobScheduleBarChart from './CronjobScheduleBarChart';
 import Header from './Header';
 
 dayjs.extend(dayjsPluginUTC);
@@ -36,16 +39,22 @@ const placeholder = `
 `;
 
 export default function CronjobScheduleVisualizer() {
-  const [cronjobs, setCronjobs] = useState([]);
+  const [rawCronjobs, setRawCronjobs] = useState([]);
   const [date, setDate] = useState(dayjs());
 
   const handleCronjobChange = (e) => {
-    setCronjobs(e.target.value.split("\n").filter(Boolean));
+    setRawCronjobs(e.target.value.split("\n").filter(Boolean));
   };
 
   const handleDateChange = (newDate) => {
     setDate(newDate);
   };
+
+  const cronjobs = rawCronjobs.map(cronjob => new Cronjob(cronjob));
+  const selectedDate = new Date(date.toISOString());
+  const minutes = getMinutesForYear(date.year()).filter(minuteDate => isSameDay(minuteDate, selectedDate));
+  const cronjobSchedule = buildCronjobSchedule(cronjobs, minutes);
+  const cronjobBarChartData = buildCronjobBarChartData(cronjobs, minutes);
 
   return (
     <>
@@ -61,7 +70,7 @@ export default function CronjobScheduleVisualizer() {
               paddingTop: 16,
             }}>
             <TextareaAutosize
-              maxRows={30}
+              maxRows={22}
               placeholder={placeholder}
               style={{
                 border: 'none',
@@ -74,7 +83,8 @@ export default function CronjobScheduleVisualizer() {
               onChange={handleCronjobChange}
             />
           </Paper>
-          <CronjobSchedule cronjobs={cronjobs} date={date} />
+          <CronjobScheduleBarChart cronjobBarChartData={cronjobBarChartData} />
+          <CronjobSchedule cronjobSchedule={cronjobSchedule} />
         </Stack>
       </Box>
     </>
